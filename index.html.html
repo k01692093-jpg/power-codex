@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 48 Laws of Power | Strategic Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Sovereign Dark (Slate-950: #020617, Surface: #0F172A, Accent: #F59E0B, Text-Muted: #94A3B8) -->
+    <!-- Application Structure Plan: A mission-critical terminal for the study of power. Added dynamic image integration for each law. The detail pane now features a high-impact visual header. Users click text blocks for voice narration, while the visual logic blueprints and images provide multi-modal learning. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap');
+
+        :root {
+            --accent: #F59E0B;
+            --surface: #0F172A;
+            --bg: #020617;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #F8FAFC;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .serif-font { font-family: 'Playfair Display', serif; }
+
+        .tactical-border {
+            border: 1px solid rgba(245, 158, 11, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+        }
+
+        .readable-section {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.02);
+            position: relative;
+        }
+
+        .readable-section:hover {
+            background: rgba(245, 158, 11, 0.03);
+            border-color: rgba(245, 158, 11, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .reading-now {
+            background: rgba(245, 158, 11, 0.08) !important;
+            border-left: 4px solid var(--accent) !important;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            transform: scale(1.01);
+        }
+
+        .law-item {
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .law-item.active {
+            border-left: 3px solid var(--accent);
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%);
+        }
+
+        /* Narrative Pulse Animation */
+        @keyframes voice-pulse {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        .pulse-bar {
+            width: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin: 0 1px;
+            display: inline-block;
+        }
+        .animating .pulse-bar {
+            animation: voice-pulse 0.8s infinite ease-in-out;
+        }
+        .animating .pulse-bar:nth-child(2) { animation-delay: 0.2s; }
+        .animating .pulse-bar:nth-child(3) { animation-delay: 0.4s; }
+
+        .blueprint-canvas {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar { width: 4px; }
+        .scrollbar-custom::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-custom::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .pulse-core {
+            position: relative;
+        }
+        .pulse-core::after {
+            content: "";
+            position: absolute;
+            width: 100%; height: 100%;
+            top: 0; left: 0;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: ping 2s infinite;
+            opacity: 0.5;
+        }
+
+        .law-image-header {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 2.5rem;
+            opacity: 0.6;
+            filter: grayscale(40%) contrast(110%);
+            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Command Strip -->
+    <header class="w-full bg-[#0F172A]/80 backdrop-blur-xl border-b border-white/5 py-4 sticky top-0 z-50">
+        <div class="max-w-[1600px] mx-auto px-6 flex flex-col lg:flex-row justify-between items-center gap-6">
+            
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-900/20">
+                    <span class="text-slate-950 font-black text-2xl italic">48</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black uppercase tracking-widest leading-none">The Laws of Power</h1>
+                    <span class="text-amber-500 text-[10px] font-mono uppercase tracking-[0.4em] font-bold">Comprehensive Strategic Archive</span>
+                </div>
+            </div>
+            
+            <!-- Voice Terminal -->
+            <div class="flex flex-wrap items-center gap-4 bg-slate-950/50 p-2 px-6 rounded-2xl border border-white/5 shadow-inner">
+                <div class="flex items-center space-x-3 border-r border-white/10 pr-6">
+                    <div id="voiceBars" class="flex items-end h-4 mr-2">
+                        <div class="pulse-bar"></div><div class="pulse-bar"></div><div class="pulse-bar"></div>
+                    </div>
+                    <select id="voiceSelect" class="bg-transparent text-slate-300 text-xs outline-none border-none cursor-pointer hover:text-white transition-all w-44 font-medium">
+                        <option value="">Neural Strategist Agent</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-6">
+                        <button onclick="playSpeech()" class="group flex items-center space-x-2 text-white/70 hover:text-amber-500 transition-all">
+                            <span class="text-xl">&#9658;</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Execute</span>
+                        </button>
+                        <button onclick="pauseSpeech()" class="group flex items-center space-x-2 text-white/70 hover:text-amber-500 transition-all">
+                            <span class="text-xl">&#10074;&#10074;</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Hold</span>
+                        </button>
+                        <button onclick="stopSpeech()" class="group flex items-center space-x-2 text-white/70 hover:text-rose-500 transition-all">
+                            <span class="text-xl">&#9632;</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Abort</span>
+                        </button>
+                    </div>
+                    <div id="voiceIndicator" class="text-[9px] text-slate-500 font-mono uppercase tracking-[0.3em] hidden xl:block border-l border-white/10 pl-6">System: Ready</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-[1600px] mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8">
+
+        <!-- Tactical Sidebar -->
+        <aside class="w-full lg:w-96 shrink-0 flex flex-col gap-6">
+            
+            <!-- Strategic Thematic Map -->
+            <div class="bg-slate-900/50 rounded-3xl p-6 border border-white/5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Power Vectors</h3>
+                    <span class="text-[10px] font-mono text-slate-500 tracking-tighter">DATA VIZ</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="powerChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Scrollable Manifest -->
+            <div class="bg-slate-900 rounded-[2rem] border border-white/5 overflow-hidden flex flex-col h-[650px] shadow-2xl">
+                <div class="p-6 bg-slate-800/30 flex items-center justify-between border-b border-white/5">
+                    <h3 class="text-xs font-black uppercase tracking-widest">The Codex</h3>
+                    <input type="text" id="lawsFilter" placeholder="Locate Law..." class="bg-slate-950/50 border border-white/10 rounded-xl px-4 py-1.5 text-xs text-slate-300 focus:ring-1 focus:ring-amber-500 outline-none w-32">
+                </div>
+                <div id="laws-list" class="overflow-y-auto scrollbar-custom flex-grow">
+                    <!-- Laws injected here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Codex Intelligence Stage -->
+        <section class="flex-grow">
+            <div id="law-detail-pane" class="bg-slate-900 rounded-[3rem] min-h-[900px] p-8 lg:p-16 border border-white/5 relative shadow-inner overflow-hidden">
+                
+                <!-- Background Ambient Glow -->
+                <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-500/5 blur-[140px] rounded-full -mr-64 -mt-64"></div>
+
+                <div id="empty-state" class="flex flex-col items-center justify-center text-center space-y-10 pt-64 opacity-50">
+                    <div class="relative">
+                        <div class="w-32 h-32 border border-amber-500/10 rounded-full animate-pulse absolute inset-0 scale-150"></div>
+                        <div class="w-32 h-32 bg-slate-800 rounded-full flex items-center justify-center text-6xl text-slate-700 shadow-inner italic serif-font">P</div>
+                    </div>
+                    <div>
+                        <h2 class="text-4xl serif-font font-black mb-4">Awaiting Selection</h2>
+                        <p class="text-slate-400 max-w-sm mx-auto font-medium leading-relaxed uppercase text-[10px] tracking-widest">Select a strategic law from the codex to deploy neural intelligence feed.</p>
+                    </div>
+                </div>
+
+                <div id="detail-content" class="hidden relative z-10">
+                    <!-- Law Visual Header Image -->
+                    <img id="detail-image" src="" alt="Strategic Visual" class="law-image-header mb-12 shadow-2xl">
+
+                    <div class="flex flex-col md:row md:items-center justify-between gap-8 mb-20">
+                        <div>
+                            <span id="detail-category" class="px-5 py-1.5 bg-amber-500/10 text-amber-500 text-[10px] uppercase font-black tracking-[0.5em] rounded-lg mb-6 inline-block border border-amber-500/20 shadow-lg shadow-amber-900/10"></span>
+                            <h2 id="detail-title" class="text-5xl lg:text-7xl serif-font font-black text-white leading-none tracking-tighter"></h2>
+                        </div>
+                        <div class="flex items-center space-x-4 bg-slate-950/80 p-4 px-6 rounded-2xl border border-white/5">
+                            <div class="w-3 h-3 rounded-full bg-amber-500 pulse-core"></div>
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Archived Intel Valid</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-16 mb-20">
+                        <!-- Visual Logic Blueprint -->
+                        <div class="xl:col-span-5 space-y-6">
+                            <div class="flex items-center justify-between px-2">
+                                <h4 class="text-[10px] uppercase tracking-[0.4em] text-amber-500 font-black">Visual Logic</h4>
+                                <span class="text-[9px] font-mono text-slate-600">ID-ARCHIVE-48</span>
+                            </div>
+                            <div id="visual-analogy" class="blueprint-canvas h-80 rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-white/5"></div>
+                        </div>
+
+                        <!-- Summary / Psychological Foundation -->
+                        <div class="xl:col-span-7 space-y-6">
+                            <h4 class="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">Philosophical Axis</h4>
+                            <div id="detail-psych" class="readable-section text-3xl leading-snug text-slate-100 serif-font italic"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-24">
+                        <!-- Case Study -->
+                        <div class="max-w-4xl">
+                            <h3 class="text-[10px] font-black text-amber-500 flex items-center mb-10 uppercase tracking-[0.5em]">
+                                <span class="mr-5 bg-amber-500 text-slate-950 w-10 h-10 flex items-center justify-center rounded-xl text-sm font-black">TX</span> Strategic Precedent
+                            </h3>
+                            <div id="detail-example" class="readable-section text-2xl leading-relaxed text-slate-300 font-light tracking-tight"></div>
+                        </div>
+
+                        <!-- Modern Implementation -->
+                        <div class="bg-gradient-to-br from-slate-800/80 to-slate-950 p-16 rounded-[4rem] tactical-border shadow-2xl relative">
+                            <div class="absolute top-0 right-0 p-8 text-amber-500/10 text-8xl font-black italic select-none">CODE</div>
+                            <h3 class="text-[10px] font-black uppercase tracking-[0.6em] text-amber-500 mb-10">Neural Deployment Protocol</h3>
+                            <div id="detail-strategy" class="readable-section text-2xl leading-relaxed text-white font-bold tracking-tight"></div>
+                        </div>
+
+                        <!-- Nuance Footer -->
+                        <div class="pt-12 border-t border-white/5">
+                            <h3 class="text-[10px] font-black text-slate-600 mb-8 uppercase tracking-[0.4em]">The Reversal & Critical Warning</h3>
+                            <div id="detail-nuance" class="readable-section text-xl text-slate-400 italic leading-relaxed serif-font bg-slate-950/20"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const lawsData = [
+            {
+                id: 1,
+                title: "Never Outshine the Master",
+                category: "Reputation",
+                image: "https://images.unsplash.com/photo-1544413550-934c5643444a?q=80&w=2000&auto=format&fit=crop", // Palace of Versailles
+                psych: "Masters are like the sun; their ego provides the warmth of the realm. Reminding them of their darkness triggers immediate termination of your position.",
+                nuance: "You may outshine a master simply by being yourself. If your boss is mediocre, your brilliance is a hostile act. Camouflage your gifts as a reflection of theirs.",
+                example: "Nicolas Fouquet vs. Louis XIV: Fouquet built a chateau more beautiful than the King's palaces and threw a legendary party. Louis XIV had him arrested the next morning. Louis hated being second in his own land.",
+                strategy: "Frame your innovations as suggestions your master once 'casually mentioned'. Deliver the outcome, but gift them the intellectual property of the origin.",
+                visual: `<div class="relative w-48 h-48 flex items-center justify-center">
+                    <div class="absolute inset-0 border-2 border-amber-500/10 rounded-full animate-pulse scale-110"></div>
+                    <div class="w-24 h-24 bg-amber-500 rounded-full shadow-[0_0_60px_rgba(245,158,11,0.5)] flex items-center justify-center">
+                        <div class="w-12 h-12 bg-slate-950/40 rounded-full blur-sm animate-ping"></div>
+                    </div>
+                    <div class="absolute bottom-4 right-4 w-8 h-8 bg-slate-700 rounded-full border-2 border-slate-900"></div>
+                </div>`
+            },
+            {
+                id: 3,
+                title: "Conceal Your Intentions",
+                category: "Deception",
+                image: "https://images.unsplash.com/photo-1590422443890-2e46f632367c?q=80&w=2000&auto=format&fit=crop", // Foggy landscape
+                psych: "Information is the precursor to a defense. By keeping people in the dark, you force them to guess, draining their mental energy while your path remains clear.",
+                nuance: "This isn't about being silent; it's about being noisy with the wrong things. Talk endlessly about your 'goals' for projects that don't matter.",
+                example: "Otto von Bismarck used a fake peace-loving speech to trick the King into funding the military. By the time the King realized Bismarck wanted war, the army was already at the border.",
+                strategy: "In high-stakes corporate shifts, leak interest in a competitor's acquisition. While the market reacts to the noise, quietly finalize the deal for the real target.",
+                visual: `<div class="grid grid-cols-3 gap-2 w-40 p-4">
+                    <div class="h-10 bg-slate-800 rounded"></div><div class="h-10 bg-slate-800 rounded"></div><div class="h-10 bg-slate-800 rounded"></div>
+                    <div class="h-10 bg-slate-800 rounded"></div><div class="h-10 bg-amber-500 rounded shadow-lg shadow-amber-500/20"></div><div class="h-10 bg-slate-800 rounded"></div>
+                    <div class="h-10 bg-slate-800 rounded"></div><div class="h-10 bg-slate-800 rounded"></div><div class="h-10 bg-slate-800 rounded"></div>
+                </div>`
+            },
+            {
+                id: 4,
+                title: "Always Say Less Than Necessary",
+                category: "Communication",
+                image: "https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?q=80&w=2000&auto=format&fit=crop", // Dark minimalist architectural space
+                psych: "Words are like currency; the more you print, the less they are worth. Silence is a vacuum that others fill with their insecurities and weaknesses.",
+                nuance: "Short answers create an aura of mystery. The less you speak, the less likely you are to say something vulnerable that can be used against you later.",
+                example: "Louis XIV would listen to complex ministerial requests for hours, then simply state 'I shall see' and walk away. The ministers spent weeks terrified of his next move.",
+                strategy: "At the end of a negotiation, state your final term and then look the counterparty in the eye without speaking. The first one to speak loses the frame.",
+                visual: `<div class="w-64 h-1 bg-slate-800 relative rounded-full">
+                    <div class="absolute left-0 top-0 h-full w-8 bg-amber-500 shadow-lg shadow-amber-500/40"></div>
+                </div>`
+            },
+            {
+                id: 5,
+                title: "So Much Depends on Reputation",
+                category: "Reputation",
+                image: "https://images.unsplash.com/photo-1510443422037-123497d33d9c?q=80&w=2000&auto=format&fit=crop", // Medieval fortress wall
+                psych: "Reputation is a psychological force multiplier. It does the work of intimidating enemies before a single word is uttered.",
+                nuance: "A single slip destroys decades of work. You must be the chief architect and chief guard of your brand. Perception is the only truth in power.",
+                example: "Chuge Liang used his reputation for complex traps to scare off 150,000 troops while he sat alone on a wall playing a lute. The enemy assumed it was a trap.",
+                strategy: "Anchor your professional identity on one non-negotiable quality (e.g., Extreme Reliability). Once established, you can move with much more freedom.",
+                visual: `<div class="w-32 h-32 border-8 border-amber-500/20 rounded-2xl flex items-center justify-center relative">
+                    <div class="w-16 h-16 bg-amber-500 rounded-lg shadow-2xl rotate-45"></div>
+                </div>`
+            },
+            {
+                id: 13,
+                title: "Appeal to Self-Interest",
+                category: "Alliances",
+                image: "https://images.unsplash.com/photo-1579621970795-87f9c7216289?q=80&w=2000&auto=format&fit=crop", // Golden scale or coins
+                psych: "Mercy and gratitude are fickle, heavy emotions. Self-interest is a constant, predictable biological drive. Align your goal with their gain.",
+                nuance: "Never remind people of your past help. It makes them feel indebted and resentful. Show them how helping you now will make them richer tomorrow.",
+                example: "The island of Corcyra won an alliance with Athens not by asking for pity, but by pointing out that their navy would make Athens the supreme sea power of Greece.",
+                strategy: "In B2B sales, ignore your product's legacy. Focus 100% on the buyer's internal KPIs and how this deal secures their next promotion.",
+                visual: `<div class="flex items-end space-x-3">
+                    <div class="w-4 h-12 bg-slate-800 rounded"></div>
+                    <div class="w-4 h-24 bg-slate-800 rounded"></div>
+                    <div class="w-4 h-40 bg-amber-500 rounded-t-xl shadow-lg shadow-amber-500/20"></div>
+                </div>`
+            },
+            {
+                id: 15,
+                title: "Crush Your Enemy Totally",
+                category: "Conflict",
+                image: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=2000&auto=format&fit=crop", // Chess pieces dark
+                psych: "A wounded enemy is a viper gathering venom. Total annihilation in spirit and resources is the only path to permanent peace.",
+                nuance: "Stopping halfway out of mercy creates a vengeful rival. If you engage in conflict, ensure there is no possibility of a comeback.",
+                example: "Liu Bang crushed Xiang Yu totally after a peace treaty. He realized that leaving his rival alive meant a second war in three years. He chose finality.",
+                strategy: "In legal disputes or competitive takeovers, leave no 'grace' loopholes. Absorb the assets and dissolve the entity entirely.",
+                visual: `<div class="w-40 h-40 bg-slate-950 rounded-full border border-white/5 flex items-center justify-center">
+                    <div class="w-4 h-4 bg-rose-600 rounded-full shadow-[0_0_20px_rgba(225,29,72,0.6)]"></div>
+                </div>`
+            },
+            {
+                id: 33,
+                title: "Discover Each Man's Thumbscrew",
+                category: "Psychology",
+                image: "https://images.unsplash.com/photo-1508615070457-7baeba4003ab?q=80&w=2000&auto=format&fit=crop", // Mechanical gears/clockwork
+                psych: "Everyone has a psychological void—a secret vanity, a childhood fear, or a hidden pleasure. Locate the handle, and you own the person.",
+                nuance: "Look for things that make people act like children. Insecurity is the most common entry point. If they are aggressive, they are likely afraid.",
+                example: "Cardinal Retz manipulated Queen Anne by realizing she was terrified of the Paris mob. He would stir the mob and then be the only one who could 'stop' it.",
+                strategy: "Listen for what people complain about most. Complaints are the GPS coordinates to their deepest sensitivities.",
+                visual: `<div class="flex items-center justify-center space-x-1">
+                    <div class="w-2 h-24 bg-slate-800 rounded-full"></div>
+                    <div class="w-12 h-2 bg-amber-500 rounded-full shadow-lg"></div>
+                    <div class="w-2 h-24 bg-slate-800 rounded-full"></div>
+                </div>`
+            },
+            {
+                id: 48,
+                title: "Assume Formlessness",
+                category: "Adaptability",
+                image: "https://images.unsplash.com/photo-1540654803822-094772396e27?q=80&w=2000&auto=format&fit=crop", // Rippling dark water
+                psych: "Anything with a shape can be captured, measured, and destroyed. By being fluid and ungraspable, you offer no target for your enemies to hit.",
+                nuance: "Formlessness is not passivity. It's the strategic use of chaos. Like water, you take the form of the environment while remaining powerful.",
+                example: "Mao's 'Jigsaw Pattern' warfare: The rigid Nationalists couldn't hit the Communists because they moved like mercury, everywhere and nowhere at once.",
+                strategy: "In the creator economy, don't lock into one platform. Develop a multi-channel brand so that if one algorithm dies, your power remains untouched.",
+                visual: `<div class="w-48 h-48 border-4 border-dashed border-amber-500/20 rounded-full animate-spin-slow flex items-center justify-center">
+                    <div class="w-24 h-24 bg-amber-500/10 rounded-full blur-xl animate-pulse"></div>
+                </div>`
+            }
+        ];
+
+        // Expansion to 48 placeholders
+        for(let i=1; i<=48; i++) {
+            if(!lawsData.find(l => l.id === i)) {
+                lawsData.push({
+                    id: i,
+                    title: `Law ${i}: Tactical Protocol ${i}`,
+                    category: i % 2 === 0 ? "Power" : "Influence",
+                    image: `https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop`, // Neural/Tech abstract
+                    psych: "This sector of the codex analyzes the relationship between pressure and submission. Mastery requires an amoral eye for leverage.",
+                    nuance: "Over-extension leads to fragility. Apply this law only when the neuro-analytics indicate a high probability of compliance.",
+                    example: "Historical precedents suggest that those who remained hidden while exerting this protocol were 80% more likely to retain power.",
+                    strategy: "Initialize contact. Identify the key decision-maker. Align their survival with your directive. Execute without emotional variance.",
+                    visual: `<div class="w-16 h-16 bg-amber-500/5 rounded border border-amber-500/20 rotate-45"></div>`
+                });
+            }
+        }
+        lawsData.sort((a,b) => a.id - b.id);
+
+        let state = {
+            selectedId: null,
+            isReading: false,
+            isPaused: false,
+            readingTarget: null,
+            utterance: null,
+            voices: [],
+            selectedVoice: null
+        };
+
+        const synth = window.speechSynthesis;
+
+        function initApp() {
+            renderList(lawsData);
+            initChart();
+            loadVoices();
+            setupInteractions();
+        }
+
+        function loadVoices() {
+            let v = synth.getVoices();
+            if (v.length !== 0) {
+                state.voices = v;
+                populateVoiceDropdown();
+            } else {
+                synth.onvoiceschanged = () => {
+                    state.voices = synth.getVoices();
+                    populateVoiceDropdown();
+                };
+            }
+        }
+
+        function populateVoiceDropdown() {
+            const select = document.getElementById('voiceSelect');
+            select.innerHTML = '<option value="">Neural Audio Agent</option>';
+            state.voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} [${voice.lang}]`;
+                select.appendChild(option);
+            });
+            select.onchange = (e) => {
+                state.selectedVoice = state.voices[e.target.value] || null;
+                if (state.isReading) { stopSpeech(); playSpeech(); }
+            };
+        }
+
+        function setupInteractions() {
+            document.getElementById('lawsFilter').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                renderList(lawsData.filter(l => l.title.toLowerCase().includes(term)));
+            });
+        }
+
+        function renderList(data) {
+            const list = document.getElementById('laws-list');
+            list.innerHTML = '';
+            data.forEach(law => {
+                const div = document.createElement('div');
+                div.className = `p-6 border-b border-white/5 law-item cursor-pointer hover:bg-white/5 ${state.selectedId === law.id ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-sm font-bold tracking-tight text-slate-200">${law.title}</p>
+                        <span class="text-[9px] font-mono text-slate-600 font-black">${law.id.toString().padStart(2, '0')}</span>
+                    </div>
+                    <span class="text-[8px] font-black text-amber-500/60 uppercase tracking-[0.2em]">${law.category}</span>
+                `;
+                div.onclick = () => selectLaw(law.id);
+                list.appendChild(div);
+            });
+        }
+
+        function selectLaw(id) {
+            state.selectedId = id;
+            stopSpeech();
+            const law = lawsData.find(l => l.id === id);
+            
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('detail-content').classList.remove('hidden');
+            
+            document.getElementById('detail-title').innerText = law.title;
+            document.getElementById('detail-category').innerText = law.category;
+            document.getElementById('detail-psych').innerText = law.psych;
+            document.getElementById('detail-example').innerText = law.example;
+            document.getElementById('detail-strategy').innerText = law.strategy;
+            document.getElementById('detail-nuance').innerText = law.nuance;
+            document.getElementById('visual-analogy').innerHTML = law.visual;
+            
+            // Set Image
+            const imgEl = document.getElementById('detail-image');
+            imgEl.src = law.image;
+            imgEl.onerror = () => { imgEl.src = "https://images.unsplash.com/photo-1510443422037-123497d33d9c?q=80&w=2000&auto=format&fit=crop"; };
+
+            renderList(lawsData); 
+
+            document.querySelectorAll('.readable-section').forEach(el => {
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    setReadingCursor(el);
+                };
+            });
+        }
+
+        function setReadingCursor(element) {
+            if (state.readingTarget) state.readingTarget.classList.remove('reading-now');
+            state.readingTarget = element;
+            state.readingTarget.classList.add('reading-now');
+            stopSpeech();
+            playSpeech();
+        }
+
+        function playSpeech() {
+            if (synth.speaking && state.isPaused) {
+                synth.resume();
+                state.isPaused = false;
+                updateUI('System: Resumed');
+                return;
+            }
+            if (!state.readingTarget) {
+                const head = document.getElementById('detail-psych');
+                if (head) setReadingCursor(head);
+                return;
+            }
+            state.utterance = new SpeechSynthesisUtterance(state.readingTarget.innerText);
+            state.utterance.rate = 0.95;
+            state.utterance.pitch = 1;
+            if (state.selectedVoice) state.utterance.voice = state.selectedVoice;
+            
+            state.utterance.onstart = () => {
+                state.isReading = true;
+                updateUI('System: Active');
+                document.getElementById('voiceBars').classList.add('animating');
+            };
+            state.utterance.onend = () => {
+                state.isReading = false;
+                state.readingTarget.classList.remove('reading-now');
+                updateUI('System: Idle');
+                document.getElementById('voiceBars').classList.remove('animating');
+            };
+            synth.speak(state.utterance);
+        }
+
+        function pauseSpeech() {
+            if (synth.speaking && !state.isPaused) {
+                synth.pause();
+                state.isPaused = true;
+                updateUI('System: Paused');
+                document.getElementById('voiceBars').classList.remove('animating');
+            }
+        }
+
+        function stopSpeech() {
+            synth.cancel();
+            state.isReading = false;
+            state.isPaused = false;
+            if (state.readingTarget) state.readingTarget.classList.remove('reading-now');
+            updateUI('System: Ready');
+            document.getElementById('voiceBars').classList.remove('animating');
+        }
+
+        function updateUI(status) {
+            const indicator = document.getElementById('voiceIndicator');
+            indicator.innerText = status;
+            indicator.classList.remove('text-slate-500', 'text-amber-500', 'text-green-500');
+            if (status.includes('Active')) indicator.classList.add('text-green-500');
+            else if (status.includes('Paused')) indicator.classList.add('text-amber-500');
+            else indicator.classList.add('text-slate-500');
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('powerChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Reputation', 'Alliances', 'Deception', 'Communication', 'Conflict'],
+                    datasets: [{
+                        label: 'Tactical Score',
+                        data: [85, 65, 95, 70, 80],
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderColor: '#F59E0B',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#F59E0B',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255,255,255,0.05)' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            pointLabels: { color: '#64748b', font: { size: 8 } },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
